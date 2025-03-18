@@ -118,7 +118,7 @@ footer {
     transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
 }
 
-/* 數字向上淡出 */
+/* 舊數字向上淡出 */
 .fade-out {
     animation: moveUp 0.5s forwards;
 }
