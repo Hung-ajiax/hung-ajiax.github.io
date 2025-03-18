@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 // 設定網站啟動日期（請修改為你的網站開始日期）
-const startDate = new Date("2023-08-15T00:00:00");  // 例如 2023 年 8 月 15 日
+const startDate = new Date("2025-03-18T00:00:00");  // 例如 2023 年 8 月 15 日
 
 function updateRunningTime() {
     const now = new Date();
