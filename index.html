@@ -3,12 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的 GitHub 個人網站</title>
-    <link rel="stylesheet" href="style.css">
-
+    <title>我的互動式網站</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+            padding: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #005f73;
+        }
+        #hiddenText {
+            display: none;
+            font-size: 18px;
+            color: #555;
+            margin-top: 20px;
+        }
+        #colorBox {
+            width: 200px;
+            height: 200px;
+            background-color: lightgray;
+            margin: 20px auto;
+            transition: background 0.5s;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-    <h1>歡迎來到我的網站！</h1>
-    <p>這是我使用 GitHub Pages 建立的個人網站。</p>
+
+    <h1>歡迎來到我的 GitHub Pages 網站！</h1>
+
+    <!-- 按鈕來顯示隱藏文字 -->
+    <button onclick="showText()">點擊我！</button>
+    <p id="hiddenText">你好！這是你的互動式網頁！🎉</p>
+
+    <!-- 按鈕來改變顏色 -->
+    <button onclick="changeColor()">改變背景顏色</button>
+    <div id="colorBox"></div>
+
+    <!-- 輸入框動態回應 -->
+    <p>輸入你的名字：</p>
+    <input type="text" id="nameInput" oninput="greetUser()" placeholder="請輸入名字...">
+    <p id="greetingText"></p>
+
+    <script>
+        // 顯示隱藏文字
+        function showText() {
+            let text = document.getElementById("hiddenText");
+            if (text.style.display === "none") {
+                text.style.display = "block";
+            } else {
+                text.style.display = "none";
+            }
+        }
+
+        // 改變顏色
+        function changeColor() {
+            let box = document.getElementById("colorBox");
+            let colors = ["red", "blue", "green", "yellow", "purple", "pink"];
+            let randomColor = colors[Math.floor(Math.random() * colors.length)];
+            box.style.backgroundColor = randomColor;
+        }
+
+        // 輸入框回應
+        function greetUser() {
+            let name = document.getElementById("nameInput").value;
+            let greeting = document.getElementById("greetingText");
+            if (name) {
+                greeting.textContent = `你好，${name}！歡迎來到我的網站！😊`;
+            } else {
+                greeting.textContent = "";
+            }
+        }
+    </script>
+
 </body>
 </html>
+
