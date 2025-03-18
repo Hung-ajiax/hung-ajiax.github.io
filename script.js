@@ -5,8 +5,12 @@ document.addEventListener("DOMContentLoaded", function() {
         alert("歡迎來到我的個人網站！");
     });
 });
-// 設定網站開始運行的日期
+// 設定網站開始運行的日期（2025 年 3 月 18 日 00:00:00）
 const startDate = new Date("2025-03-18T00:00:00");
+
+// 建立時間顯示的元素
+const timeContainer = document.getElementById("runningTime");
+let lastTime = { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
 function updateRunningTime() {
     const now = new Date();
@@ -23,27 +27,41 @@ function updateRunningTime() {
 
     let seconds = Math.floor(diff / 1000);
 
-    let runningTimeContainer = document.getElementById("runningTime");
+    // 更新時間的數字
+    updateTimeUnit("days", days);
+    updateTimeUnit("hours", hours);
+    updateTimeUnit("minutes", minutes);
+    updateTimeUnit("seconds", seconds);
+}
 
-    // 讓舊的數字淡出
-    if (runningTimeContainer.children.length > 0) {
-        let oldTime = runningTimeContainer.children[0];
-        oldTime.classList.add("fade-out");
-        
-        // 移除舊的元素
+// 更新單一時間單位的數字
+function updateTimeUnit(unit, newValue) {
+    let element = document.getElementById(unit);
+    if (!element) {
+        element = document.createElement("span");
+        element.id = unit;
+        element.classList.add("running-time");
+        timeContainer.appendChild(element);
+    }
+
+    if (newValue !== lastTime[unit]) {
+        let oldElement = element.cloneNode(true);
+        oldElement.textContent = lastTime[unit];
+        oldElement.classList.add("fade-out");
+
+        element.textContent = newValue;
+        element.classList.add("fade-in");
+
+        // 移除舊的數字
+        timeContainer.insertBefore(oldElement, element);
         setTimeout(() => {
-            runningTimeContainer.removeChild(oldTime);
+            oldElement.remove();
         }, 500);
     }
 
-    // 建立新的數字
-    let newTime = document.createElement("span");
-    newTime.classList.add("running-time");
-    newTime.textContent = `${days} 天 ${hours} 小時 ${minutes} 分鐘 ${seconds} 秒`;
-
-    runningTimeContainer.appendChild(newTime);
+    lastTime[unit] = newValue;
 }
 
-// 每秒更新一次
+// 每秒更新
 setInterval(updateRunningTime, 1000);
 updateRunningTime();
