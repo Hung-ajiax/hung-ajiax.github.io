@@ -64,4 +64,35 @@ function updateTimeUnit(unit, newValue) {
 // 每秒更新
 setInterval(updateRunningTime, 1000);
 updateRunningTime();
+function updateTimeUnit(unit, newValue) {
+    let element = document.getElementById(unit);
+    
+    if (!element) {
+        console.error(`元素 ${unit} 不存在，請檢查 HTML！`);
+        return; // 避免繼續執行
+    }
+
+    // 確保數值變更時才觸發動畫
+    if (newValue !== lastTime[unit]) {
+        let oldElement = document.createElement("span");
+        oldElement.textContent = lastTime[unit];
+        oldElement.classList.add("running-time", "fade-out");
+
+        let newElement = document.createElement("span");
+        newElement.textContent = newValue;
+        newElement.classList.add("running-time", "fade-in");
+        newElement.id = unit;
+
+        element.parentNode.replaceChild(newElement, element);
+        element.parentNode.insertBefore(oldElement, newElement);
+
+        // 移除舊的數字
+        setTimeout(() => {
+            oldElement.remove();
+        }, 500);
+    }
+
+    lastTime[unit] = newValue;
+}
+
 
