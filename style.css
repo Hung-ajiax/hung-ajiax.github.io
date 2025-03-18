@@ -110,3 +110,17 @@ footer {
     align-items: center;
     justify-content: center;
 }
+/* 設定運行時間數字 */
+.running-time {
+    display: inline-block;
+    font-size: 18px;
+    color: white;
+    transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+}
+
+/* 執行消失動畫 */
+.fade-out {
+    opacity: 0;
+    transform: translateY(-20px); /* 向上移動 20px */
+}
+
