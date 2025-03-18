@@ -5,11 +5,10 @@ document.addEventListener("DOMContentLoaded", function() {
         alert("歡迎來到我的個人網站！");
     });
 });
-// 設定網站開始運行的日期（2025 年 3 月 18 日 00:00:00）
+// 設定網站開始運行的時間
 const startDate = new Date("2025-03-18T00:00:00");
 
-// 建立時間顯示的元素
-const timeContainer = document.getElementById("runningTime");
+// 記錄最後顯示的時間數據
 let lastTime = { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
 function updateRunningTime() {
@@ -27,33 +26,33 @@ function updateRunningTime() {
 
     let seconds = Math.floor(diff / 1000);
 
-    // 更新時間的數字
+    // 更新時間單位
     updateTimeUnit("days", days);
     updateTimeUnit("hours", hours);
     updateTimeUnit("minutes", minutes);
     updateTimeUnit("seconds", seconds);
 }
 
-// 更新單一時間單位的數字
+// 獨立更新每個時間單位
 function updateTimeUnit(unit, newValue) {
     let element = document.getElementById(unit);
-    if (!element) {
-        element = document.createElement("span");
-        element.id = unit;
-        element.classList.add("running-time");
-        timeContainer.appendChild(element);
-    }
-
+    
+    // 確保數值變更時才觸發動畫
     if (newValue !== lastTime[unit]) {
         let oldElement = element.cloneNode(true);
         oldElement.textContent = lastTime[unit];
         oldElement.classList.add("fade-out");
 
-        element.textContent = newValue;
-        element.classList.add("fade-in");
+        let newElement = document.createElement("span");
+        newElement.textContent = newValue;
+        newElement.classList.add("running-time", "fade-in");
+        newElement.id = unit;
+
+        // 替換舊的數字
+        element.parentNode.replaceChild(newElement, element);
+        element.parentNode.insertBefore(oldElement, newElement);
 
         // 移除舊的數字
-        timeContainer.insertBefore(oldElement, element);
         setTimeout(() => {
             oldElement.remove();
         }, 500);
@@ -65,3 +64,4 @@ function updateTimeUnit(unit, newValue) {
 // 每秒更新
 setInterval(updateRunningTime, 1000);
 updateRunningTime();
+
