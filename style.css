@@ -77,11 +77,10 @@ footer {
 }
 /* 社群媒體按鈕區塊 */
 .social-container {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(50, 60, 80, 0.8);
+    position: absolute; /* 讓它依照網頁內容的位置擺放 */
+    bottom: 20px; /* 距離底部 20px */
+    right: 20px; /* 距離右側 20px */
+    background: rgba(50, 60, 80, 0.8); /* 半透明背景 */
     padding: 15px 25px;
     border-radius: 30px;
     display: flex;
@@ -111,4 +110,3 @@ footer {
     align-items: center;
     justify-content: center;
 }
-
