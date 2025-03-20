@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function() {
 const startDate = new Date("2025-03-18T00:00:00");
 
 // 記錄最後顯示的時間數據
-let lastTime = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+//let lastTime = { days: 0, hours: 0, minutes: 0, seconds: 0 };
 
 function updateRunningTime() {
     const now = new Date();
