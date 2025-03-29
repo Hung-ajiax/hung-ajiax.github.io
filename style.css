@@ -110,7 +110,6 @@ footer {
     align-items: center;
     justify-content: center;
 }
-/* 設定運行時間數字 */
 .running-time {
     display: inline-block;
     font-size: 18px;
@@ -118,12 +117,10 @@ footer {
     transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
 }
 
-/* 舊數字向上淡出 */
 .fade-out {
     animation: moveUp 0.5s forwards;
 }
 
-/* 新數字從下方進入 */
 .fade-in {
     animation: moveDown 0.5s ease-out;
 }
