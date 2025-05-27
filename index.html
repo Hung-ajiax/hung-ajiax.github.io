@@ -128,23 +128,27 @@
         const n1 = parseFloat(document.getElementById('n1').value);
         const n2 = parseFloat(document.getElementById('n2').value);
 
-        // 法線：水平線的垂直方向
+        // 水平線（界面）的法線
         const dx = surfPt2.x - surfPt1.x;
         const dy = surfPt2.y - surfPt1.y;
-        const normal = normalize({ x: -dy, y: dx });
+        let normal = normalize({ x: -dy, y: dx });
 
-        // 求交點
-        const px = surfPt1;
-        const py = surfPt2;
-        const rx = incidentPt1;
-        const ry = incidentPt2;
-        const denom = (px.x - py.x) * (rx.y - ry.y) - (px.y - py.y) * (rx.x - ry.x);
+        // 計算交點
+        const denom = (surfPt1.x - surfPt2.x) * (incidentPt1.y - incidentPt2.y) - (surfPt1.y - surfPt2.y) * (incidentPt1.x - incidentPt2.x);
         if (denom === 0) return;
-        const t = ((px.x - rx.x) * (rx.y - ry.y) - (px.y - rx.y) * (rx.x - ry.x)) / denom;
+        const t = ((surfPt1.x - incidentPt1.x) * (incidentPt1.y - incidentPt2.y) - (surfPt1.y - incidentPt1.y) * (incidentPt1.x - incidentPt2.x)) / denom;
         const intersection = {
-          x: px.x + t * (py.x - px.x),
-          y: px.y + t * (py.y - px.y)
+          x: surfPt1.x + t * (surfPt2.x - surfPt1.x),
+          y: surfPt1.y + t * (surfPt2.y - surfPt1.y)
         };
+
+        // 入射向量
+        const incident = normalize({ x: incidentPt1.x - intersection.x, y: incidentPt1.y - intersection.y });
+
+        // 如果 normal 和 incident 同向，代表法線方向錯了 → 反轉
+        if (dot(incident, normal) > 0) {
+          normal = { x: -normal.x, y: -normal.y };
+        }
 
         // 畫出法線
         drawLine(
@@ -152,8 +156,6 @@
           { x: intersection.x + normal.x * 50, y: intersection.y + normal.y * 50 },
           'green'
         );
-
-        const incident = normalize({ x: incidentPt1.x - intersection.x, y: incidentPt1.y - intersection.y });
 
         const reflectVec = reflect(incident, normal);
         drawLine(intersection, {
@@ -175,4 +177,3 @@
   </script>
 </body>
 </html>
-
