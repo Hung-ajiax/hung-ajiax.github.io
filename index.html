@@ -34,6 +34,8 @@
   <input type="file" id="imageUpload">
   <button onclick="resetCanvas()">重新開始</button>
 
+  <p>請依序點擊：<strong>水平線</strong>（兩點，代表介質交界）→ <strong>入射線</strong>（兩點）</p>
+
   <canvas id="canvas"></canvas>
 
   <script>
@@ -115,36 +117,43 @@
       ctx.fill();
 
       if (++state === 4) {
-        drawLine(points[0], points[1], 'red');
-        drawLine(points[2], points[3], 'blue');
+        const surfPt1 = points[0];
+        const surfPt2 = points[1];
+        const incidentPt1 = points[2];
+        const incidentPt2 = points[3];
+
+        drawLine(surfPt1, surfPt2, 'red');
+        drawLine(incidentPt1, incidentPt2, 'blue');
 
         const n1 = parseFloat(document.getElementById('n1').value);
         const n2 = parseFloat(document.getElementById('n2').value);
 
-        const px = points[0];
-        const py = points[1];
-        const rx = points[2];
-        const ry = points[3];
+        // 法線：水平線的垂直方向
+        const dx = surfPt2.x - surfPt1.x;
+        const dy = surfPt2.y - surfPt1.y;
+        const normal = normalize({ x: -dy, y: dx });
 
+        // 求交點
+        const px = surfPt1;
+        const py = surfPt2;
+        const rx = incidentPt1;
+        const ry = incidentPt2;
         const denom = (px.x - py.x) * (rx.y - ry.y) - (px.y - py.y) * (rx.x - ry.x);
         if (denom === 0) return;
-
         const t = ((px.x - rx.x) * (rx.y - ry.y) - (px.y - rx.y) * (rx.x - ry.x)) / denom;
         const intersection = {
           x: px.x + t * (py.x - px.x),
           y: px.y + t * (py.y - px.y)
         };
 
-        const dx = py.x - px.x;
-        const dy = py.y - px.y;
-        const normal = normalize({ x: -dy, y: dx });
+        // 畫出法線
         drawLine(
           { x: intersection.x - normal.x * 50, y: intersection.y - normal.y * 50 },
           { x: intersection.x + normal.x * 50, y: intersection.y + normal.y * 50 },
           'green'
         );
 
-        const incident = normalize({ x: points[2].x - intersection.x, y: points[2].y - intersection.y });
+        const incident = normalize({ x: incidentPt1.x - intersection.x, y: incidentPt1.y - intersection.y });
 
         const reflectVec = reflect(incident, normal);
         drawLine(intersection, {
