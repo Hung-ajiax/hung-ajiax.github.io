@@ -1,65 +1,175 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的個人網站</title>
-    <link rel="stylesheet" href="style.css">
-    <script defer src="script.js"></script>
-    <!-- FontAwesome 圖示庫 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <meta charset="UTF-8">
+  <title>折射線模擬器</title>
+  <style>
+    canvas {
+      border: 1px solid #888;
+      margin-top: 1rem;
+    }
+    select, button {
+      margin-right: 1rem;
+      font-size: 1rem;
+    }
+  </style>
 </head>
 <body>
+  <h2>折射線模擬器（純前端）</h2>
+  <label>上方介質：</label>
+  <select id="n1">
+    <option value="1.0003">空氣</option>
+    <option value="1.333">水</option>
+    <option value="1.50">玻璃</option>
+    <option value="2.42">鑽石</option>
+  </select>
 
-    <!-- 頁首區域 -->
-    <div class="hero">
-        <div class="overlay"></div>
-        <div class="content">
-            <h1>歡迎來到我的網站</h1>
-            <p>這是一個簡約而有設計感的個人網站</p>
-            <a href="#about" class="btn">了解更多</a>
-        </div>
-    </div>
+  <label>下方介質：</label>
+  <select id="n2">
+    <option value="1.333">水</option>
+    <option value="1.50">玻璃</option>
+    <option value="2.42">鑽石</option>
+  </select>
 
-    <!-- 關於我 -->
-    <section id="about" class="about">
-        <h2>關於我</h2>
-        <p>這裡是你的個人簡介，介紹你的興趣、職業或任何你想分享的內容。</p>
-    </section>
+  <input type="file" id="imageUpload">
+  <button onclick="resetCanvas()">重新開始</button>
 
-    <!-- 頁腳 -->
-    <footer>
-        <p>© 2025 ❤️ Hung-ajiax</p>
-        <p>共 <span id="articleCount">0</span> 篇文章，共 <span id="wordCount">0</span> 字</p>
-        <p>此網站已運行 
-            <span id="days" class="running-time">0</span> 天 
-            <span id="hours" class="running-time">0</span> 小時 
-            <span id="minutes" class="running-time">0</span> 分鐘 
-            <span id="seconds" class="running-time">0</span> 秒
-        </p>
-    </footer>
+  <canvas id="canvas"></canvas>
 
-    <!-- 社群媒體按鈕 -->
-    <div class="social-container">
-        <a href="https://github.com/Hung-ajiax" target="_blank">
-            <i class="fab fa-github"></i>
-        </a>
-        <a href="https://instagram.com/zxun._.0824" target="_blank">
-            <i class="fab fa-instagram"></i>
-        </a>
-        <a href="mailto:cindy7365934@gmail.com">
-            <i class="fas fa-at"></i>
-        </a>
-        <a href="https://facebook.com/洪子軒" target="_blank">
-            <i class="fab fa-facebook"></i>
-        </a>
-    </div>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const imgInput = document.getElementById('imageUpload');
 
-</body>
-</html>
+    let image = new Image();
+    let state = 0; // 0: 水平線第一點, 1: 水平線第二點, 2: 入射線第一點, 3: 入射線第二點
+    const points = [];
 
+    imgInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+          image.onload = () => {
+            canvas.width = image.width;
+            canvas.height = image.height;
+            ctx.drawImage(image, 0, 0);
+          };
+          image.src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    });
 
+    function resetCanvas() {
+      state = 0;
+      points.length = 0;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0);
+    }
+
+    function drawLine(p1, p2, color) {
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function normalize(v) {
+      const len = Math.hypot(v.x, v.y);
+      return { x: v.x / len, y: v.y / len };
+    }
+
+    function dot(v1, v2) {
+      return v1.x * v2.x + v1.y * v2.y;
+    }
+
+    function reflect(v, n) {
+      const d = dot(v, n);
+      return { x: v.x - 2 * d * n.x, y: v.y - 2 * d * n.y };
+    }
+
+    function refract(v, n, n1, n2) {
+      const cosi = -dot(v, n);
+      const eta = n1 / n2;
+      const k = 1 - eta * eta * (1 - cosi * cosi);
+      if (k < 0) return null; // 全反射
+      return {
+        x: eta * v.x + (eta * cosi - Math.sqrt(k)) * n.x,
+        y: eta * v.y + (eta * cosi - Math.sqrt(k)) * n.y
+      };
+    }
+
+    canvas.addEventListener('click', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      points.push({ x, y });
+
+      if (state === 0 || state === 1) ctx.fillStyle = 'red';
+      else ctx.fillStyle = 'blue';
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (++state === 4) {
+        // 畫水平線與入射線
+        drawLine(points[0], points[1], 'red');
+        drawLine(points[2], points[3], 'blue');
+
+        const n1 = parseFloat(document.getElementById('n1').value);
+        const n2 = parseFloat(document.getElementById('n2').value);
+
+        // 求交點
+        const px = points[0];
+        const py = points[1];
+        const rx = points[2];
+        const ry = points[3];
+
+        const denom = (px.x - py.x) * (rx.y - ry.y) - (px.y - py.y) * (rx.x - ry.x);
+        if (denom === 0) return;
+
+        const t = ((px.x - rx.x) * (rx.y - ry.y) - (px.y - rx.y) * (rx.x - ry.x)) / denom;
+        const intersection = {
+          x: px.x + t * (py.x - px.x),
+          y: px.y + t * (py.y - px.y)
+        };
+
+        // 法線（水平線垂直）
+        const dx = py.x - px.x;
+        const dy = py.y - px.y;
+        const normal = normalize({ x: -dy, y: dx });
+        drawLine(
+          { x: intersection.x - normal.x * 50, y: intersection.y - normal.y * 50 },
+          { x: intersection.x + normal.x * 50, y: intersection.y + normal.y * 50 },
+          'green'
+        );
+
+        // 入射向量
+        const incident = normalize({ x: rx.x - intersection.x, y: ry.y - intersection.y });
+
+        // 反射向量
+        const reflectVec = reflect(incident, normal);
+        drawLine(intersection, {
+          x: intersection.x + reflectVec.x * 100,
+          y: intersection.y + reflectVec.y * 100
+        }, 'yellow');
+
+        // 折射向量
+        const refractVec = refract(incident, normal, n1, n2);
+        if (refractVec) {
+          drawLine(intersection, {
+            x: intersection.x + refractVec.x * 100,
+            y: intersection.y + refractVec.y * 100
+          }, 'purple');
+        } else {
+          alert("⚠️ 發生全反射");
+        }
+      }
+    });
+  </script>
 </body>
 </html>
 
