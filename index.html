@@ -42,7 +42,7 @@
     const imgInput = document.getElementById('imageUpload');
 
     let image = new Image();
-    let state = 0; // 0: 水平線第一點, 1: 水平線第二點, 2: 入射線第一點, 3: 入射線第二點
+    let state = 0;
     const points = [];
 
     imgInput.addEventListener('change', (e) => {
@@ -95,7 +95,7 @@
       const cosi = -dot(v, n);
       const eta = n1 / n2;
       const k = 1 - eta * eta * (1 - cosi * cosi);
-      if (k < 0) return null; // 全反射
+      if (k < 0) return null;
       return {
         x: eta * v.x + (eta * cosi - Math.sqrt(k)) * n.x,
         y: eta * v.y + (eta * cosi - Math.sqrt(k)) * n.y
@@ -115,14 +115,12 @@
       ctx.fill();
 
       if (++state === 4) {
-        // 畫水平線與入射線
         drawLine(points[0], points[1], 'red');
         drawLine(points[2], points[3], 'blue');
 
         const n1 = parseFloat(document.getElementById('n1').value);
         const n2 = parseFloat(document.getElementById('n2').value);
 
-        // 求交點
         const px = points[0];
         const py = points[1];
         const rx = points[2];
@@ -137,7 +135,6 @@
           y: px.y + t * (py.y - px.y)
         };
 
-        // 法線（水平線垂直）
         const dx = py.x - px.x;
         const dy = py.y - px.y;
         const normal = normalize({ x: -dy, y: dx });
@@ -147,17 +144,13 @@
           'green'
         );
 
-        // 入射向量
         const incident = normalize({ x: rx.x - intersection.x, y: ry.y - intersection.y });
-
-        // 反射向量
         const reflectVec = reflect(incident, normal);
         drawLine(intersection, {
           x: intersection.x + reflectVec.x * 100,
           y: intersection.y + reflectVec.y * 100
         }, 'yellow');
 
-        // 折射向量
         const refractVec = refract(incident, normal, n1, n2);
         if (refractVec) {
           drawLine(intersection, {
