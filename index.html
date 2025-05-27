@@ -144,7 +144,8 @@
           'green'
         );
 
-        const incident = normalize({ x: rx.x - intersection.x, y: ry.y - intersection.y });
+        const incident = normalize({ x: points[2].x - intersection.x, y: points[2].y - intersection.y });
+
         const reflectVec = reflect(incident, normal);
         drawLine(intersection, {
           x: intersection.x + reflectVec.x * 100,
