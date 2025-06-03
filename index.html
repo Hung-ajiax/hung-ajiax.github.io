@@ -4,71 +4,94 @@
   <meta charset="UTF-8">
   <title>折射線模擬器</title>
   <style>
-    canvas {
-      border: 1px solid #888;
-      margin-top: 1rem;
-    }
-    select, button {
-      margin-right: 1rem;
-      font-size: 1rem;
-    }
+    canvas { border: 1px solid #ccc; margin-top: 1em; }
+    select, input { margin: 0.5em; }
   </style>
 </head>
 <body>
-  <h2>折射線模擬器（純前端）</h2>
-  <label>上方介質：</label>
+  <h2>折射線模擬器</h2>
+  <label>上方介質:</label>
   <select id="n1">
     <option value="1.0003">空氣</option>
     <option value="1.333">水</option>
     <option value="1.50">玻璃</option>
     <option value="2.42">鑽石</option>
   </select>
-
-  <label>下方介質：</label>
+  <label>下方介質:</label>
   <select id="n2">
     <option value="1.333">水</option>
     <option value="1.50">玻璃</option>
     <option value="2.42">鑽石</option>
   </select>
-
-  <input type="file" id="imageUpload">
-  <button onclick="resetCanvas()">重新開始</button>
-
-  <p>請依序點擊：<strong>水平線</strong>（兩點，代表介質交界）→ <strong>入射線</strong>（兩點）</p>
-
-  <canvas id="canvas"></canvas>
+  <br>
+  <input type="file" id="imgInput">
+  <button onclick="resetCanvas()">重設</button>
+  <canvas id="canvas" width="800" height="600"></canvas>
 
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const imgInput = document.getElementById('imageUpload');
-
     let image = new Image();
-    let state = 0;
-    const points = [];
+    let points = []; // 點擊座標：水平線兩點，入射線兩點
 
-    imgInput.addEventListener('change', (e) => {
+    const materials = {
+      '空氣': 1.0003,
+      '水': 1.333,
+      '玻璃': 1.50,
+      '鑽石': 2.42
+    };
+
+    document.getElementById('imgInput').addEventListener('change', e => {
       const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-          image.onload = () => {
-            canvas.width = image.width;
-            canvas.height = image.height;
-            ctx.drawImage(image, 0, 0);
-          };
-          image.src = evt.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = evt => {
+        image.onload = () => ctx.drawImage(image, 0, 0);
+        image.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
     });
 
     function resetCanvas() {
-      state = 0;
-      points.length = 0;
+      points = [];
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(image, 0, 0);
+      if (image.src) ctx.drawImage(image, 0, 0);
     }
+
+    function normalize(v) {
+      const len = Math.hypot(v.x, v.y);
+      return { x: v.x / len, y: v.y / len };
+    }
+
+    function dot(a, b) {
+      return a.x * b.x + a.y * b.y;
+    }
+
+    function reflect(inc, norm) {
+      const d = dot(inc, norm);
+      return {
+        x: inc.x - 2 * d * norm.x,
+        y: inc.y - 2 * d * norm.y
+      };
+    }
+
+    function cross(a, b) {
+      return a.x * b.y - a.y * b.x;
+    }
+
+    canvas.addEventListener('click', e => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      points.push({ x, y });
+
+      ctx.beginPath();
+      ctx.arc(x, y, 3, 0, 2 * Math.PI);
+      ctx.fillStyle = points.length <= 2 ? 'red' : 'blue';
+      ctx.fill();
+
+      if (points.length === 4) drawRefraction();
+    });
 
     function drawLine(p1, p2, color) {
       ctx.beginPath();
@@ -79,101 +102,69 @@
       ctx.stroke();
     }
 
-    function normalize(v) {
-      const len = Math.hypot(v.x, v.y);
-      return { x: v.x / len, y: v.y / len };
-    }
+    function drawRefraction() {
+      const [s1, s2, i1, i2] = points;
+      drawLine(s1, s2, 'red'); // 界面
+      drawLine(i1, i2, 'blue'); // 入射線
 
-    function dot(v1, v2) {
-      return v1.x * v2.x + v1.y * v2.y;
-    }
+      const n1 = parseFloat(document.getElementById('n1').value);
+      const n2 = parseFloat(document.getElementById('n2').value);
 
-    function reflect(v, n) {
-      const d = dot(v, n);
-      return { x: v.x - 2 * d * n.x, y: v.y - 2 * d * n.y };
-    }
+      // 法線（水平垂直）
+      const dx = s2.x - s1.x;
+      const dy = s2.y - s1.y;
+      const normal = normalize({ x: -dy, y: dx });
 
-    function refract(v, n, n1, n2) {
-      const cosi = -dot(v, n);
-      const eta = n1 / n2;
-      const k = 1 - eta * eta * (1 - cosi * cosi);
-      if (k < 0) return null;
-      return {
-        x: eta * v.x + (eta * cosi - Math.sqrt(k)) * n.x,
-        y: eta * v.y + (eta * cosi - Math.sqrt(k)) * n.y
-      };
-    }
+      // 求交點
+      const intersection = s1;
+      const incident = normalize({ x: i1.x - intersection.x, y: i1.y - intersection.y });
 
-    canvas.addEventListener('click', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      points.push({ x, y });
+      // 畫法線
+      drawLine(
+        { x: intersection.x - normal.x * 60, y: intersection.y - normal.y * 60 },
+        { x: intersection.x + normal.x * 60, y: intersection.y + normal.y * 60 },
+        'green'
+      );
 
-      if (state === 0 || state === 1) ctx.fillStyle = 'red';
-      else ctx.fillStyle = 'blue';
-      ctx.beginPath();
-      ctx.arc(x, y, 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      if (++state === 4) {
-        const surfPt1 = points[0];
-        const surfPt2 = points[1];
-        const incidentPt1 = points[2];
-        const incidentPt2 = points[3];
-
-        drawLine(surfPt1, surfPt2, 'red');
-        drawLine(incidentPt1, incidentPt2, 'blue');
-
-        const n1 = parseFloat(document.getElementById('n1').value);
-        const n2 = parseFloat(document.getElementById('n2').value);
-
-        // 水平線（界面）的法線
-        const dx = surfPt2.x - surfPt1.x;
-        const dy = surfPt2.y - surfPt1.y;
-        let normal = normalize({ x: -dy, y: dx });
-
-        // 計算交點
-        const denom = (surfPt1.x - surfPt2.x) * (incidentPt1.y - incidentPt2.y) - (surfPt1.y - surfPt2.y) * (incidentPt1.x - incidentPt2.x);
-        if (denom === 0) return;
-        const t = ((surfPt1.x - incidentPt1.x) * (incidentPt1.y - incidentPt2.y) - (surfPt1.y - incidentPt1.y) * (incidentPt1.x - incidentPt2.x)) / denom;
-        const intersection = {
-          x: surfPt1.x + t * (surfPt2.x - surfPt1.x),
-          y: surfPt1.y + t * (surfPt2.y - surfPt1.y)
-        };
-
-        // 入射向量
-        const incident = normalize({ x: incidentPt1.x - intersection.x, y: incidentPt1.y - intersection.y });
-
-        // 如果 normal 和 incident 同向，代表法線方向錯了 → 反轉
-        if (dot(incident, normal) > 0) {
-          normal = { x: -normal.x, y: -normal.y };
-        }
-
-        // 畫出法線
-        drawLine(
-          { x: intersection.x - normal.x * 50, y: intersection.y - normal.y * 50 },
-          { x: intersection.x + normal.x * 50, y: intersection.y + normal.y * 50 },
-          'green'
-        );
-
-        const reflectVec = reflect(incident, normal);
-        drawLine(intersection, {
-          x: intersection.x + reflectVec.x * 100,
-          y: intersection.y + reflectVec.y * 100
-        }, 'yellow');
-
-        const refractVec = refract(incident, normal, n1, n2);
-        if (refractVec) {
-          drawLine(intersection, {
-            x: intersection.x + refractVec.x * 100,
-            y: intersection.y + refractVec.y * 100
-          }, 'purple');
-        } else {
-          alert("⚠️ 發生全反射");
-        }
+      // 反射線
+      let reflectVec = reflect(incident, normal);
+      if (dot(reflectVec, incident) < 0) {
+        reflectVec = { x: -reflectVec.x, y: -reflectVec.y };
       }
-    });
+      drawLine(intersection, {
+        x: intersection.x + reflectVec.x * 100,
+        y: intersection.y + reflectVec.y * 100
+      }, 'yellow');
+
+      // 折射線
+      const theta1 = Math.acos(Math.min(Math.max(-dot(incident, normal), -1), 1));
+      const sinTheta2 = (n1 / n2) * Math.sin(theta1);
+
+      if (sinTheta2 > 1) {
+        alert("⚠️ 發生全反射");
+        return;
+      }
+
+      const theta2 = Math.asin(sinTheta2);
+      const sign = cross(normal, incident) < 0 ? -1 : 1;
+      const nx = normal.x, ny = normal.y;
+      const cosT = Math.cos(theta2), sinT = Math.sin(theta2);
+      const refractVec = sign < 0
+        ? { x: nx * cosT - ny * sinT, y: ny * cosT + nx * sinT }
+        : { x: nx * cosT + ny * sinT, y: ny * cosT - nx * sinT };
+
+      drawLine(intersection, {
+        x: intersection.x + refractVec.x * 100,
+        y: intersection.y + refractVec.y * 100
+      }, 'magenta');
+
+      console.log(`✅ 入射角: ${(theta1 * 180 / Math.PI).toFixed(2)}°`);
+      if (n1 > n2) {
+        const critical = Math.asin(n2 / n1);
+        console.log(`✅ 臨界角: ${(critical * 180 / Math.PI).toFixed(2)}°`);
+      }
+    }
   </script>
 </body>
 </html>
+
