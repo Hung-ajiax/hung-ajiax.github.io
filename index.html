@@ -144,6 +144,19 @@
 
       // 反射線
       let reflectVec = reflect(incident, normal);
+      // 反射線：修正方向讓它與入射線同側
+      const testPt = {
+        x: intersection.x + reflectVec.x,
+        y: intersection.y + reflectVec.y
+      };
+      const inPt = {
+        x: intersection.x + incident.x,
+        y: intersection.y + incident.y
+      };
+      if (dot({ x: testPt.x - intersection.x, y: testPt.y - intersection.y },
+              { x: inPt.x - intersection.x, y: inPt.y - intersection.y }) < 0) {
+        reflectVec = { x: -reflectVec.x, y: -reflectVec.y };
+      }
       drawLine(intersection, {
         x: intersection.x + reflectVec.x * 100,
         y: intersection.y + reflectVec.y * 100
