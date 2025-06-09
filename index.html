@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
-  <title>折射線模擬器（純前端）</title>
+  <title>折射線模擬器（修正版）</title>
   <style>
     canvas {
       border: 1px solid #aaa;
@@ -125,13 +125,8 @@
         'green'
       );
 
+      // 反射線方向（反射對稱）
       let reflectVec = reflect(incident, normal);
-      const testPt = { x: intersection.x + reflectVec.x, y: intersection.y + reflectVec.y };
-      const inPt = { x: intersection.x + incident.x, y: intersection.y + incident.y };
-      if (dot({ x: testPt.x - intersection.x, y: testPt.y - intersection.y },
-              { x: inPt.x - intersection.x, y: inPt.y - intersection.y }) < 0) {
-        reflectVec = { x: -reflectVec.x, y: -reflectVec.y };
-      }
       drawLine(intersection, {
         x: intersection.x + reflectVec.x * 100,
         y: intersection.y + reflectVec.y * 100
@@ -146,21 +141,19 @@
       }
 
       const theta2 = Math.asin(sinTheta2);
-      const crossVal = cross(normal, incident);
-      const sign = crossVal < 0 ? -1 : 1;
-      const nx = normal.x, ny = normal.y;
-      const cosT = Math.cos(theta2), sinT = Math.sin(theta2);
 
+      // 正確折射方向向量（不用旋轉座標）
+      const cos_theta1 = dot(incident, normal) * -1;
+      const r = n1 / n2;
+      const k = 1 - r * r * (1 - cos_theta1 * cos_theta1);
       let refractVec;
-      if (sign === -1) {
-        refractVec = {
-          x: nx * cosT - ny * sinT,
-          y: ny * cosT + nx * sinT
-        };
+      if (k < 0) {
+        alert("⚠️ 發生全反射（數值計算）");
+        return;
       } else {
         refractVec = {
-          x: nx * cosT + ny * sinT,
-          y: ny * cosT - nx * sinT
+          x: r * incident.x + (r * cos_theta1 - Math.sqrt(k)) * normal.x,
+          y: r * incident.y + (r * cos_theta1 - Math.sqrt(k)) * normal.y
         };
       }
 
